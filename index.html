@@ -26,6 +26,10 @@ select{background:var(--card);color:var(--tx);border:1px solid var(--line);borde
 .mx td{text-align:center;min-width:64px}.mx th{text-align:center}.mx td.na{color:var(--line)}
 .pr{display:flex;height:44px;border-radius:6px;overflow:hidden;font:700 24px/44px 'Barlow Condensed',sans-serif;margin:16px 0}
 .pr div{padding:0 12px;color:#0c1b33;min-width:48px}
+#awd{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.aw{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px}
+.aw .em{font-size:30px;line-height:1}.aw h4{font:700 22px/1.1 'Barlow Condensed',sans-serif;margin:6px 0 2px;color:var(--gold)}
+.aw small{display:block}.aw .wn{font:700 28px/1.2 'Barlow Condensed',sans-serif;margin-top:8px}.sm{font-size:13px;margin-top:6px}
 #err{color:var(--l);padding:20px;max-width:1100px;margin:auto}
 </style></head><body>
 <header><h1>Liga NBA 2K <span>ELO</span></h1><p class="sub" id="meta">Cargando partidos…</p></header>
@@ -34,6 +38,7 @@ select{background:var(--card);color:var(--tx);border:1px solid var(--line);borde
 <section id="s-rank"><div class="box" id="rank"></div><div class="box"><h3 style="margin-top:0">Últimos partidos</h3><div id="rec"></div></div></section>
 <section id="s-elo"><div class="box"><div class="cv"><canvas id="c-elo"></canvas></div></div></section>
 <section id="s-stats"><div class="box" id="stats"></div><div class="box" id="pos"></div></section>
+<section id="s-awd"><div id="awd"></div></section>
 <section id="s-h2h"><div class="box" id="h2h"></div><div class="box" id="duel"></div></section>
 <section id="s-prof"><select id="sel-p" aria-label="Jugador"></select><div id="prof" style="margin-top:16px"></div></section>
 <section id="s-pred"><select id="pa" aria-label="Jugador A"></select><select id="pb" aria-label="Jugador B"></select><div id="pred"></div></section>
@@ -41,14 +46,15 @@ select{background:var(--card);color:var(--tx);border:1px solid var(--line);borde
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
-const SUPABASE_URL='https://snicjtufgmlpmtdzpilh.supabase.co', SUPABASE_KEY='sb_publishable_qxeblvVBOMtG8mhXv_FoIQ_QEhcP44T';const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const SUPABASE_URL='https://TU-PROYECTO.supabase.co', SUPABASE_KEY='TU_ANON_KEY';
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 const PAL=['#ffd23f','#4cc9f0','#5fd39a','#ff6b6b','#c77dff','#ff9f1c','#2ec4b6','#f15bb5','#b8c0d4'];
 const $=s=>document.querySelector(s),pc=(a,b)=>b?Math.round(100*a/b):0,sg=n=>n>0?'+'+n:''+n;
 let P={},M=[],CH={},ids=[];
 async function all(t){let o=[],f=0;for(;;){const{data,error}=await sb.from(t).select('*').range(f,f+999);if(error)throw error;o.push(...data);if(data.length<1000)break;f+=1000}return o}
 function build(pl,H){
  M.sort((a,b)=>new Date(a.played_at)-new Date(b.played_at)||a.match_id-b.match_id);
- pl.forEach((p,i)=>P[p.player_id]={id:p.player_id,name:p.name,active:p.active,color:PAL[i%PAL.length],g:0,w:0,l:0,pf:0,pa:0,hg:0,hw:0,hpf:0,hpa:0,ag:0,aw:0,apf:0,apa:0,rk:{},cl:[0,0],bl:[0,0],form:[],str:0,mw:0,ml:0,best:null,h2h:{},elo:1500,peak:0,last:0,curve:[]});
+ pl.forEach((p,i)=>P[p.player_id]={id:p.player_id,name:p.name,active:p.active,color:PAL[i%PAL.length],g:0,w:0,l:0,pf:0,pa:0,hg:0,hw:0,hpf:0,hpa:0,ag:0,aw:0,apf:0,apa:0,rk:{},ud:[0,0],fv:[0,0],gi:null,c3:[0,0],fd:[],cl:[0,0],bl:[0,0],form:[],str:0,mw:0,ml:0,best:null,h2h:{},elo:1500,peak:0,last:0,curve:[]});
  const E={};H.forEach(h=>E[h.match_id+'|'+h.player_id]=h);
  const cur={},seen=new Set();pl.forEach(p=>cur[p.player_id]=1500);
  M.forEach((m,i)=>{m.n=i+1;
@@ -56,11 +62,13 @@ function build(pl,H){
   const ord=[...seen].sort((x,y)=>cur[y]-cur[x]||P[x].name.localeCompare(P[y].name));
   [m.player1_id,m.player2_id].forEach(id=>{const r=ord.indexOf(id)+1;P[id].rk[r]=(P[id].rk[r]||0)+1});
   [[m.player1_id,m.score1,m.player2_id,m.score2],[m.player2_id,m.score2,m.player1_id,m.score1]].forEach(([a,sa,b,sb_],ix)=>{
-   const p=P[a],d=sa-sb_,win=d>0,ad=Math.abs(d);p.g++;p.pf+=sa;p.pa+=sb_;if(ix===0){p.hg++;p.hpf+=sa;p.hpa+=sb_;if(win)p.hw++}else{p.ag++;p.apf+=sa;p.apa+=sb_;if(win)p.aw++}win?p.w++:p.l++;p.form.push(win?'W':'L');
-   if(ad<=5)p.cl[win?0:1]++;if(ad>=20)p.bl[win?0:1]++;
+   const p=P[a],d=sa-sb_,win=d>0,ad=Math.abs(d);p.g++;p.pf+=sa;p.pa+=sb_;if(ix===0){p.hg++;p.hpf+=sa;p.hpa+=sb_;if(win)p.hw++}else{p.ag++;p.apf+=sa;p.apa+=sb_;if(win)p.aw++}win?p.w++:p.l++;p.form.push(win?'W':'L');p.fd.push(d);
+   if(ad<=3)p.c3[win?0:1]++;if(ad<=5)p.cl[win?0:1]++;if(ad>=20)p.bl[win?0:1]++;
    p.str=win?(p.str>0?p.str+1:1):(p.str<0?p.str-1:-1);p.mw=Math.max(p.mw,p.str);p.ml=Math.max(p.ml,-p.str);
    if(win&&(!p.best||d>p.best.d))p.best={d,opp:b,sa,sb:sb_};
    const h=p.h2h[b]||(p.h2h[b]={w:0,l:0,d:0,s:0,mx:0,lw:null});win?h.w++:h.l++;h.d+=d;h.s=win?(h.s>0?h.s+1:1):(h.s<0?h.s-1:-1);h.mx=Math.max(h.mx,h.s);if(win)h.lw=m.played_at;
+   const ea=E[m.match_id+'|'+a],eb=E[m.match_id+'|'+b];
+   if(ea&&eb){const q=1/(1+10**((eb.elo_before-ea.elo_before)/400));if(q<.5){p.ud[1]++;if(win)p.ud[0]++}else if(q>.5){p.fv[1]++;if(win)p.fv[0]++}if(win&&(!p.gi||q<p.gi.pr))p.gi={pr:q,opp:b,sa,sb:sb_}}
    const e=E[m.match_id+'|'+a];if(e){cur[a]=e.elo_after;p.elo=e.elo_after;p.last=e.elo_change;p.peak=Math.max(p.peak,e.elo_before,e.elo_after);p.curve.push({x:m.n,y:e.elo_after})}
   })})}
 const act=()=>Object.values(P).filter(p=>p.g).sort((a,b)=>b.elo-a.elo);
@@ -96,7 +104,32 @@ function duels(){const r=act(),f=d=>d?new Date(d).toLocaleDateString('es-AR'):'�
   const n=Math.abs(x.s),w=x.s>0?a:b;
   rows.push(`<tr><td>${a.name} vs ${b.name}</td><td>${x.w}-${x.l}</td><td>${w.name} · ${n} ${n>1?'victorias seguidas':'victoria'}</td><td>${a.name}: ${f(x.lw)}<br>${b.name}: ${f(y.lw)}</td><td>${a.name}: ${x.mx}<br>${b.name}: ${y.mx}</td></tr>`)}));
  $('#duel').innerHTML='<h3 style="margin-top:0">Rachas por duelo</h3><table><tr><th>Duelo</th><th>V-D</th><th>Racha actual</th><th>Última victoria</th><th>Máxima racha</th></tr>'+rows.join('')+'</table>'}
-const TABS=[['rank','Ranking'],['elo','Evolución ELO'],['stats','Estadísticas'],['h2h','Cara a cara'],['prof','Jugador'],['pred','Predictor']];
+function awards(){const r=act();
+ const L10=p=>p.form.slice(-10).filter(x=>x==='W').length,D10=p=>p.fd.slice(-10).reduce((a,b)=>a+b,0);
+ const loc=p=>p.hg&&p.ag?pc(p.hw,p.hg)-pc(p.aw,p.ag):null;
+ const c3=p=>p.c3[0]+p.c3[1]>=5?p.c3[0]/(p.c3[0]+p.c3[1]):null,c3t=p=>`${pc(p.c3[0],p.c3[0]+p.c3[1])}% (${p.c3[0]} de ${p.c3[0]+p.c3[1]})`;
+ const A=[
+ ['👑','Mejor ELO','El más alto hoy',p=>p.elo,1,p=>p.elo+' puntos'],
+ ['🏆','Mayor % de victorias','',p=>p.w/p.g,1,p=>`${pc(p.w,p.g)}% (${p.w}-${p.l})`],
+ ['📈','Mayor diferencial','Diferencia de puntos por partido',p=>(p.pf-p.pa)/p.g,1,p=>`${sg(((p.pf-p.pa)/p.g).toFixed(1))} por partido (${sg(p.pf-p.pa)} total)`],
+ ['🔥','Mejor forma','Últimos 10 partidos',p=>L10(p)*1000+D10(p),1,p=>`${L10(p)}-${10-L10(p)} · ${sg(D10(p))} pts`],
+ ['⚔️','Mejor ataque','Más puntos anotados por partido',p=>p.pf/p.g,1,p=>avg(p.pf,p.g)+' por partido'],
+ ['🛡️','Mejor defensa','Menos puntos recibidos por partido',p=>p.pa/p.g,0,p=>avg(p.pa,p.g)+' por partido'],
+ ['🐺','Especialista en underdogs','Mejor % cuando el ELO lo daba perdedor',p=>p.ud[1]>=10?p.ud[0]/p.ud[1]:null,1,p=>`${pc(p.ud[0],p.ud[1])}% (${p.ud[0]} de ${p.ud[1]})`],
+ ['🎯','Favorito confiable','Mejor % cuando el ELO lo daba favorito',p=>p.fv[1]>=10?p.fv[0]/p.fv[1]:null,1,p=>`${pc(p.fv[0],p.fv[1])}% (${p.fv[0]} de ${p.fv[1]})`],
+ ['🏹','Cazador de gigantes','La victoria más improbable según el ELO',p=>p.gi?-p.gi.pr:null,1,p=>`${Math.round(p.gi.pr*100)}% de probabilidad · ${p.gi.sa}-${p.gi.sb} a ${P[p.gi.opp].name}`,p=>Math.round(p.gi.pr*100)+'%'],
+ ['🚜','Tractor','Mayor racha de victorias',p=>p.mw,1,p=>`${p.mw} seguidas`],
+ ['🧊','ICEMAN','Mejor % en partidos de 3 puntos o menos',c3,1,c3t],
+ ['🤡','Embarra Pijas','Peor % en partidos de 3 puntos o menos',c3,0,c3t],
+ ['🍆','La cogida más grande','Mayor diferencia de puntos en un partido',p=>p.best?p.best.d:null,1,p=>`${p.best.sa}-${p.best.sb} a ${P[p.best.opp].name}`,p=>'+'+p.best.d],
+ ['🕳️','El pozo ciego','Mayor racha de derrotas',p=>p.ml,1,p=>`${p.ml} seguidas`],
+ ['🧳','Turista','Mayor caída de % de victorias de local a visita',loc,1,p=>`Local ${pc(p.hw,p.hg)}% · Visita ${pc(p.aw,p.ag)}%`,p=>sg(loc(p))+' pts']];
+ $('#awd').innerHTML=A.map(([e,t,d,f,hi,fm,sh])=>{
+  const rk=r.map(p=>({p,v:f(p)})).filter(x=>x.v!==null&&x.v!==undefined).sort((a,b)=>hi?b.v-a.v:a.v-b.v);
+  if(!rk.length)return `<div class="aw"><div class="em">${e}</div><h4>${t}</h4><small class="mut">Sin datos suficientes</small></div>`;
+  const w=rk[0].p;
+  return `<div class="aw"><div class="em">${e}</div><h4>${t}</h4><small class="mut">${d}</small><div class="wn"><i class="dot" style="background:${w.color}"></i>${w.name}</div><div>${fm(w)}</div><div class="mut sm">${rk.slice(1).map(x=>`${x.p.name} ${sh?sh(x.p):fm(x.p).split(' ')[0]}`).join(' · ')}</div></div>`}).join('')}
+const TABS=[['rank','Ranking'],['elo','Evolución ELO'],['stats','Estadísticas'],['awd','Premios'],['h2h','Cara a cara'],['prof','Jugador'],['pred','Predictor']];
 $('#nav').innerHTML=TABS.map(([k,v])=>`<button data-k="${k}">${v}</button>`).join('');
 function tab(k){document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.k===k));document.querySelectorAll('section').forEach(s=>s.classList.toggle('on',s.id==='s-'+k));
  if(k==='elo')line('c-elo',act().map(ds));if(k==='prof')prof($('#sel-p').value)}
@@ -106,6 +139,6 @@ $('#sel-p').onchange=e=>prof(e.target.value);$('#pa').onchange=$('#pb').onchange
  const[pl,m,h]=await Promise.all([all('players'),all('matches'),all('elo_history')]);M=m;build(pl,h);ids=act();
  const o=ids.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');$('#sel-p').innerHTML=$('#pa').innerHTML=$('#pb').innerHTML=o;if(ids[1])$('#pb').value=ids[1].id;
  $('#meta').textContent=`${M.length} partidos · ${ids.length} jugadores · actualizado ${new Date(M[M.length-1].played_at).toLocaleDateString('es-AR')}`;
- rank();stats();h2h();duels();pred();tab('rank')
+ rank();stats();awards();h2h();duels();pred();tab('rank')
 }catch(e){$('#meta').textContent='';$('#err').textContent='No se pudieron cargar los datos: '+(e.message||e)+'. Revisá la URL, la anon key y las políticas RLS de lectura.'}})();
 </script></body></html>
