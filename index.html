@@ -62,7 +62,7 @@ select{background:var(--card);color:var(--tx);border:1px solid var(--line);borde
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
-const SUPABASE_URL='https://snicjtufgmlpmtdzpilh.supabase.co', SUPABASE_KEY='sb_publishable_qxeblvVBOMtG8mhXv_FoIQ_QEhcP44T';
+const SUPABASE_URL='https://TU-PROYECTO.supabase.co', SUPABASE_KEY='TU_ANON_KEY';
 const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 const PAL=['#ffd23f','#4cc9f0','#5fd39a','#ff6b6b','#c77dff','#ff9f1c','#2ec4b6','#f15bb5','#b8c0d4'];
 const $=s=>document.querySelector(s),pc=(a,b)=>b?Math.round(100*a/b):0,sg=n=>n>0?'+'+n:''+n;
@@ -165,12 +165,12 @@ function pwr(){
  const f=act().map(p=>{const n=Math.min(10,p.form.length),w=p.form.slice(-n).filter(x=>x==='W').length,mean=p.fd.reduce((a,b)=>a+b,0)/p.g;
   return{p,n,w,e:p.elo,f:(w+5)/(n+10)*100,d:(p.pf-p.pa)/p.g,s:p.fu[1]?100*p.fu[0]/p.fu[1]:0,c:100*p.fd.filter(x=>Math.abs(x-mean)<=10).length/p.g}});
  ['e','f','d','s','c'].forEach(k=>{const a=f.map(x=>x[k]),m=a.reduce((x,y)=>x+y,0)/a.length,sd=Math.sqrt(a.reduce((x,y)=>x+(y-m)**2,0)/a.length)||1;f.forEach(x=>x['z'+k]=(x[k]-m)/sd)});
- f.forEach(x=>{x.P=.40*x.ze+.25*x.zf+.20*x.zd+.10*x.zs+.05*x.zc;x.ca=[.40*x.ze,.25*x.zf,.20*x.zd,.10*x.zs,.05*x.zc]});
+ f.forEach(x=>{x.P=.40*x.ze+.25*x.zf+.10*x.zd+.20*x.zs+.05*x.zc;x.ca=[.40*x.ze,.25*x.zf,.10*x.zd,.20*x.zs,.05*x.zc]});
  f.sort((a,b)=>b.P-a.P);
- $('#power').innerHTML='<h3 style="margin-top:0">⚡ Power Rating</h3><table><tr><th>#</th><th>Jugador</th><th>Power</th><th>ELO</th></tr>'+
- f.map((x,i)=>`<tr><td>${i+1}</td>${nm(x.p)}<td class="big ${x.P>=0?'w':'l'}">${sg(x.P.toFixed(2))}</td><td>${x.p.elo}</td></tr>`).join('')+'</table><p class="mut">0 = promedio del grupo. Combina ELO, forma reciente, diferencia de puntos, rendimiento contra rivales fuertes y consistencia.</p>'+
+ $('#power').innerHTML='<h3 style="margin-top:0">⚡ Power Rating</h3><table><tr><th>#</th><th>Jugador</th><th>Power</th><th>ELO</th><th>Forma (10)</th><th>% vs fuertes</th><th>Dif./partido</th><th>Consistencia (±10)</th></tr>'+
+ f.map((x,i)=>`<tr><td>${i+1}</td>${nm(x.p)}<td class="big ${x.P>=0?'w':'l'}">${sg(x.P.toFixed(2))}</td><td>${x.p.elo}</td><td>${x.w}-${x.n-x.w}</td><td>${x.s.toFixed(1)}%</td><td class="${x.d>=0?'w':'l'}">${(x.d>0?'+':'')+x.d.toFixed(2)}</td><td>${x.c.toFixed(0)}%</td></tr>`).join('')+'</table><p class="mut">0 = promedio del grupo. Combina ELO, forma reciente, diferencia de puntos, rendimiento contra rivales fuertes y consistencia.</p>'+
  '<h3>De dónde sale cada Power</h3><p class="mut" style="margin-top:0">Cada barra es el aporte de un componente: a la derecha suma, a la izquierda resta. La racha es informativa y no entra en el cálculo.</p>'+
- (()=>{const mx=Math.max(...f.flatMap(x=>x.ca.map(Math.abs)))||1,L=['ELO (40%)','Forma (25%)','Diferencia (20%)','Rivales fuertes (10%)','Consistencia (5%)'];
+ (()=>{const mx=Math.max(...f.flatMap(x=>x.ca.map(Math.abs)))||1,L=['ELO (40%)','Forma (25%)','Diferencia (10%)','Rivales fuertes (20%)','Consistencia (5%)'];
   const V=x=>[`${x.p.elo}`,`${x.w}-${x.n-x.w}`,(x.d>0?'+':'')+x.d.toFixed(2),`${x.s.toFixed(0)}%`,`${x.c.toFixed(0)}%`];
   return '<div class="pw">'+f.map(x=>{const r=x.p.str;return `<div class="pwc"><div class="pwh"><i class="dot" style="background:${x.p.color}"></i><b>${x.p.name}</b><span class="big ${x.P>=0?'w':'l'}">${sg(x.P.toFixed(2))}</span><span class="chip ${r>0?'w':'l'}">Racha ${r>0?'V'+r:'D'+-r}</span></div>`+
    x.ca.map((c,i)=>`<div class="bl"><span>${L[i]} <span class="mut">${V(x)[i]}</span></span><div class="tr"><div class="fl ${c>=0?'pos':'neg'}" style="width:${Math.min(50,Math.abs(c)/mx*50)}%"></div></div><span class="v">${c>=0?'+':''}${c.toFixed(2)}</span></div>`).join('')+'</div>'}).join('')+'</div>'})()}
