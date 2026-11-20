@@ -34,6 +34,15 @@ select{background:var(--card);color:var(--tx);border:1px solid var(--line);borde
 .seg button{background:none;border:1px solid var(--line);color:var(--mut);padding:6px 12px;border-radius:6px;font:inherit;cursor:pointer}
 .seg button.on{background:var(--gold);color:#0c1b33;border-color:var(--gold);font-weight:700}
 .sqs .f{width:14px;height:14px;margin-right:4px;border-radius:3px}
+.pw{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:12px;margin-top:8px}
+.pwc{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:12px}
+.pwh{display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap}.pwh .big{font-size:24px}
+.chip{font-size:12px;padding:2px 8px;border-radius:10px;border:1px solid var(--line)}
+.bl{display:grid;grid-template-columns:200px 1fr 46px;gap:8px;align-items:center;font-size:13px;margin:6px 0}
+.bl .v{text-align:right;color:var(--mut)}
+.tr{position:relative;height:10px;background:#1b3559;border-radius:5px}
+.tr:after{content:"";position:absolute;left:50%;top:-3px;bottom:-3px;width:2px;background:var(--mut)}
+.fl{position:absolute;top:0;bottom:0;border-radius:5px}.fl.pos{left:50%;background:var(--w)}.fl.neg{right:50%;background:var(--l)}
 #err{color:var(--l);padding:20px;max-width:1100px;margin:auto}
 </style></head><body>
 <header><h1>Liga NBA 2K <span>ELO</span></h1><p class="sub" id="meta">Cargando partidos…</p></header>
@@ -42,7 +51,7 @@ select{background:var(--card);color:var(--tx);border:1px solid var(--line);borde
 <section id="s-rank"><div class="box" id="rank"></div><div class="box"><h3 style="margin-top:0">Últimos partidos</h3><div id="rec"></div></div></section>
 <section id="s-elo"><div class="box"><div class="cv"><canvas id="c-elo"></canvas></div></div></section>
 <section id="s-stats"><div class="box" id="stats"></div><div class="box" id="pos"></div></section>
-<section id="s-form"><div class="seg" id="fseg"></div><div class="box" id="form"></div></section>
+<section id="s-form"><div class="box" id="power"></div><div class="seg" id="fseg"></div><div class="box" id="form"></div></section>
 <section id="s-perf"><div class="box" id="pf-a"></div><div class="box" id="pf-d"></div><div class="box" id="pf-n"></div><div class="box" id="pf-c"></div></section>
 <section id="s-wins"><div class="box" id="wq1"></div><div class="box" id="wq2"></div></section>
 <section id="s-awd"><div id="awd"></div></section>
@@ -53,7 +62,7 @@ select{background:var(--card);color:var(--tx);border:1px solid var(--line);borde
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
-const SUPABASE_URL='https://snicjtufgmlpmtdzpilh.supabase.co', SUPABASE_KEY='sb_publishable_qxeblvVBOMtG8mhXv_FoIQ_QEhcP44T';
+const SUPABASE_URL='https://TU-PROYECTO.supabase.co', SUPABASE_KEY='TU_ANON_KEY';
 const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 const PAL=['#ffd23f','#4cc9f0','#5fd39a','#ff6b6b','#c77dff','#ff9f1c','#2ec4b6','#f15bb5','#b8c0d4'];
 const $=s=>document.querySelector(s),pc=(a,b)=>b?Math.round(100*a/b):0,sg=n=>n>0?'+'+n:''+n;
@@ -61,7 +70,7 @@ let P={},M=[],CH={},ids=[],WL=[];
 async function all(t){let o=[],f=0;for(;;){const{data,error}=await sb.from(t).select('*').range(f,f+999);if(error)throw error;o.push(...data);if(data.length<1000)break;f+=1000}return o}
 function build(pl,H){
  M.sort((a,b)=>new Date(a.played_at)-new Date(b.played_at)||a.match_id-b.match_id);
- pl.forEach((p,i)=>P[p.player_id]={id:p.player_id,name:p.name,active:p.active,color:PAL[i%PAL.length],g:0,w:0,l:0,pf:0,pa:0,hg:0,hw:0,hpf:0,hpa:0,ag:0,aw:0,apf:0,apa:0,rk:{},sc:[],al:[],wq:[0,0,0,0],worst:null,ud:[0,0],fv:[0,0],gi:null,c3:[0,0],fd:[],cl:[0,0],bl:[0,0],form:[],str:0,mw:0,ml:0,best:null,h2h:{},elo:1500,peak:0,last:0,curve:[]});
+ pl.forEach((p,i)=>P[p.player_id]={id:p.player_id,name:p.name,active:p.active,color:PAL[i%PAL.length],g:0,w:0,l:0,pf:0,pa:0,hg:0,hw:0,hpf:0,hpa:0,ag:0,aw:0,apf:0,apa:0,rk:{},sc:[],al:[],wq:[0,0,0,0],worst:null,ud:[0,0],fu:[0,0],fv:[0,0],gi:null,c3:[0,0],fd:[],cl:[0,0],bl:[0,0],form:[],str:0,mw:0,ml:0,best:null,h2h:{},elo:1500,peak:0,last:0,curve:[]});
  const E={};H.forEach(h=>E[h.match_id+'|'+h.player_id]=h);
  const cur={},seen=new Set();pl.forEach(p=>cur[p.player_id]=1500);
  M.forEach((m,i)=>{m.n=i+1;
@@ -75,7 +84,7 @@ function build(pl,H){
    if(win&&(!p.best||d>p.best.d))p.best={d,opp:b,sa,sb:sb_};
    const h=p.h2h[b]||(p.h2h[b]={w:0,l:0,d:0,s:0,mx:0,lw:null});win?h.w++:h.l++;h.d+=d;h.s=win?(h.s>0?h.s+1:1):(h.s<0?h.s-1:-1);h.mx=Math.max(h.mx,h.s);if(win)h.lw=m.played_at;
    const ea=E[m.match_id+'|'+a],eb=E[m.match_id+'|'+b];
-   if(ea&&eb){const q=1/(1+10**((eb.elo_before-ea.elo_before)/400));if(q<.5){p.ud[1]++;if(win)p.ud[0]++}else if(q>.5){p.fv[1]++;if(win)p.fv[0]++}if(win&&(!p.gi||q<p.gi.pr))p.gi={pr:q,opp:b,sa,sb:sb_};if(win){const ed=ea.elo_before-eb.elo_before,k=ed>50?0:ed>=-50?1:ed>=-200?2:3;p.wq[k]++;WL.push({date:m.played_at,a,b,sa,sb:sb_,ed,k})}}
+   if(ea&&eb){const q=1/(1+10**((eb.elo_before-ea.elo_before)/400));if(eb.elo_before>=1200){p.fu[1]++;if(win)p.fu[0]++}if(q<.5){p.ud[1]++;if(win)p.ud[0]++}else if(q>.5){p.fv[1]++;if(win)p.fv[0]++}if(win&&(!p.gi||q<p.gi.pr))p.gi={pr:q,opp:b,sa,sb:sb_};if(win){const ed=ea.elo_before-eb.elo_before,k=ed>50?0:ed>=-50?1:ed>=-200?2:3;p.wq[k]++;WL.push({date:m.played_at,a,b,sa,sb:sb_,ed,k})}}
    const e=E[m.match_id+'|'+a];if(e){cur[a]=e.elo_after;p.elo=e.elo_after;p.last=e.elo_change;p.peak=Math.max(p.peak,e.elo_before,e.elo_after);p.curve.push({x:m.n,y:e.elo_after})}
   })})}
 const act=()=>Object.values(P).filter(p=>p.g).sort((a,b)=>b.elo-a.elo);
@@ -152,6 +161,19 @@ const QB=[['🟢','Esperadas'],['🔵','Sólidas'],['🟣','Upsets'],['🔴','Gr
 function wins(){const r=act();
  $('#wq1').innerHTML='<h3 style="margin-top:0">Calidad de victoria</h3>'+tb(['Jugador','Victorias',...QB.map(([e,t])=>`${e} ${t}`)],r.map(p=>{const t=p.wq.reduce((a,b)=>a+b,0);return `<tr>${nm(p)}<td>${t}</td>${p.wq.map(n=>`<td>${n} <span class="mut">(${pc(n,t)}%)</span></td>`).join('')}</tr>`}))+'<p class="mut">Según la diferencia de ELO antes del partido: 🟢 favorito por más de 50 · 🔵 rival parejo (±50) · 🟣 underdog por 50 a 200 · 🔴 underdog por más de 200.</p>';
  $('#wq2').innerHTML='<h3 style="margin-top:0">Últimas victorias</h3><table>'+WL.slice(-15).reverse().map(x=>`<tr><td class="mut">${new Date(x.date).toLocaleDateString('es-AR')}</td><td>${QB[x.k][0]}</td><td>${P[x.a].name} ${x.sa}-${x.sb} a ${P[x.b].name}</td><td class="mut">ELO ${sg(x.ed)}</td></tr>`).join('')+'</table>'}
+function pwr(){
+ const f=act().map(p=>{const n=Math.min(10,p.form.length),w=p.form.slice(-n).filter(x=>x==='W').length,mean=p.fd.reduce((a,b)=>a+b,0)/p.g;
+  return{p,n,w,e:p.elo,f:(w+5)/(n+10)*100,d:(p.pf-p.pa)/p.g,s:p.fu[1]?100*p.fu[0]/p.fu[1]:0,c:100*p.fd.filter(x=>Math.abs(x-mean)<=10).length/p.g}});
+ ['e','f','d','s','c'].forEach(k=>{const a=f.map(x=>x[k]),m=a.reduce((x,y)=>x+y,0)/a.length,sd=Math.sqrt(a.reduce((x,y)=>x+(y-m)**2,0)/a.length)||1;f.forEach(x=>x['z'+k]=(x[k]-m)/sd)});
+ f.forEach(x=>{x.P=.40*x.ze+.25*x.zf+.20*x.zd+.10*x.zs+.05*x.zc;x.ca=[.40*x.ze,.25*x.zf,.20*x.zd,.10*x.zs,.05*x.zc]});
+ f.sort((a,b)=>b.P-a.P);
+ $('#power').innerHTML='<h3 style="margin-top:0">⚡ Power Rating</h3><table><tr><th>#</th><th>Jugador</th><th>Power</th><th>ELO</th></tr>'+
+ f.map((x,i)=>`<tr><td>${i+1}</td>${nm(x.p)}<td class="big ${x.P>=0?'w':'l'}">${sg(x.P.toFixed(2))}</td><td>${x.p.elo}</td></tr>`).join('')+'</table><p class="mut">0 = promedio del grupo. Combina ELO, forma reciente, diferencia de puntos, rendimiento contra rivales fuertes y consistencia.</p>'+
+ '<h3>De dónde sale cada Power</h3><p class="mut" style="margin-top:0">Cada barra es el aporte de un componente: a la derecha suma, a la izquierda resta. La racha es informativa y no entra en el cálculo.</p>'+
+ (()=>{const mx=Math.max(...f.flatMap(x=>x.ca.map(Math.abs)))||1,L=['ELO (40%)','Forma (25%)','Diferencia (20%)','Rivales fuertes (10%)','Consistencia (5%)'];
+  const V=x=>[`${x.p.elo}`,`${x.w}-${x.n-x.w}`,(x.d>0?'+':'')+x.d.toFixed(2),`${x.s.toFixed(0)}%`,`${x.c.toFixed(0)}%`];
+  return '<div class="pw">'+f.map(x=>{const r=x.p.str;return `<div class="pwc"><div class="pwh"><i class="dot" style="background:${x.p.color}"></i><b>${x.p.name}</b><span class="big ${x.P>=0?'w':'l'}">${sg(x.P.toFixed(2))}</span><span class="chip ${r>0?'w':'l'}">Racha ${r>0?'V'+r:'D'+-r}</span></div>`+
+   x.ca.map((c,i)=>`<div class="bl"><span>${L[i]} <span class="mut">${V(x)[i]}</span></span><div class="tr"><div class="fl ${c>=0?'pos':'neg'}" style="width:${Math.min(50,Math.abs(c)/mx*50)}%"></div></div><span class="v">${c>=0?'+':''}${c.toFixed(2)}</span></div>`).join('')+'</div>'}).join('')+'</div>'})()}
 const sq=F=>F.map(x=>`<b class="f ${x}"></b>`).join('');
 let FN=10;
 function forma(){
@@ -171,6 +193,6 @@ $('#sel-p').onchange=e=>prof(e.target.value);$('#pa').onchange=$('#pb').onchange
  const[pl,m,h]=await Promise.all([all('players'),all('matches'),all('elo_history')]);M=m;build(pl,h);ids=act();
  const o=ids.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');$('#sel-p').innerHTML=$('#pa').innerHTML=$('#pb').innerHTML=o;if(ids[1])$('#pb').value=ids[1].id;
  $('#meta').textContent=`${M.length} partidos · ${ids.length} jugadores · actualizado ${new Date(M[M.length-1].played_at).toLocaleDateString('es-AR')}`;
- rank();forma();stats();perf();wins();awards();h2h();duels();pred();tab('rank')
+ rank();forma();pwr();stats();perf();wins();awards();h2h();duels();pred();tab('rank')
 }catch(e){$('#meta').textContent='';$('#err').textContent='No se pudieron cargar los datos: '+(e.message||e)+'. Revisá la URL, la anon key y las políticas RLS de lectura.'}})();
 </script></body></html>
