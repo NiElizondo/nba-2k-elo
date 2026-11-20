@@ -30,6 +30,10 @@ select{background:var(--card);color:var(--tx);border:1px solid var(--line);borde
 .aw{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px}
 .aw .em{font-size:30px;line-height:1}.aw h4{font:700 22px/1.1 'Barlow Condensed',sans-serif;margin:6px 0 2px;color:var(--gold)}
 .aw small{display:block}.aw .wn{font:700 28px/1.2 'Barlow Condensed',sans-serif;margin-top:8px}.sm{font-size:13px;margin-top:6px}
+.seg{display:flex;gap:6px;margin-bottom:16px}
+.seg button{background:none;border:1px solid var(--line);color:var(--mut);padding:6px 12px;border-radius:6px;font:inherit;cursor:pointer}
+.seg button.on{background:var(--gold);color:#0c1b33;border-color:var(--gold);font-weight:700}
+.sqs .f{width:14px;height:14px;margin-right:4px;border-radius:3px}
 #err{color:var(--l);padding:20px;max-width:1100px;margin:auto}
 </style></head><body>
 <header><h1>Liga NBA 2K <span>ELO</span></h1><p class="sub" id="meta">Cargando partidos…</p></header>
@@ -38,6 +42,7 @@ select{background:var(--card);color:var(--tx);border:1px solid var(--line);borde
 <section id="s-rank"><div class="box" id="rank"></div><div class="box"><h3 style="margin-top:0">Últimos partidos</h3><div id="rec"></div></div></section>
 <section id="s-elo"><div class="box"><div class="cv"><canvas id="c-elo"></canvas></div></div></section>
 <section id="s-stats"><div class="box" id="stats"></div><div class="box" id="pos"></div></section>
+<section id="s-form"><div class="seg" id="fseg"></div><div class="box" id="form"></div></section>
 <section id="s-awd"><div id="awd"></div></section>
 <section id="s-h2h"><div class="box" id="h2h"></div><div class="box" id="duel"></div></section>
 <section id="s-prof"><select id="sel-p" aria-label="Jugador"></select><div id="prof" style="margin-top:16px"></div></section>
@@ -46,7 +51,7 @@ select{background:var(--card);color:var(--tx);border:1px solid var(--line);borde
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
-const SUPABASE_URL='https://snicjtufgmlpmtdzpilh.supabase.co', SUPABASE_KEY='sb_publishable_qxeblvVBOMtG8mhXv_FoIQ_QEhcP44T';
+const SUPABASE_URL='https://TU-PROYECTO.supabase.co', SUPABASE_KEY='TU_ANON_KEY';
 const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 const PAL=['#ffd23f','#4cc9f0','#5fd39a','#ff6b6b','#c77dff','#ff9f1c','#2ec4b6','#f15bb5','#b8c0d4'];
 const $=s=>document.querySelector(s),pc=(a,b)=>b?Math.round(100*a/b):0,sg=n=>n>0?'+'+n:''+n;
@@ -74,8 +79,8 @@ function build(pl,H){
 const act=()=>Object.values(P).filter(p=>p.g).sort((a,b)=>b.elo-a.elo);
 const avg=(a,g)=>g?(a/g).toFixed(1):'–',vd=(w,g)=>g?`${w}-${g-w} (${pc(w,g)}%)`:'–';
 function rank(){
- $('#rank').innerHTML='<table><tr><th>#</th><th>Jugador</th><th>ELO</th><th>Último</th><th>PJ</th><th>V-D</th><th>%V</th><th>Local</th><th>Visita</th><th>Dif. pts</th><th>Racha</th><th>Últimos 10</th></tr>'+
- act().map((p,i)=>`<tr><td>${i+1}</td><td><i class="dot" style="background:${p.color}"></i>${p.name}</td><td class="big">${p.elo}</td><td class="${p.last>=0?'w':'l'}">${sg(p.last)}</td><td>${p.g}</td><td>${p.w}-${p.l}</td><td>${pc(p.w,p.g)}%</td><td>${vd(p.hw,p.hg)}</td><td>${vd(p.aw,p.ag)}</td><td>${sg(p.pf-p.pa)}</td><td class="${p.str>0?'w':'l'}">${p.str>0?'V'+p.str:'D'+-p.str}</td><td>${p.form.slice(-10).map(x=>`<b class="f ${x}"></b>`).join('')}</td></tr>`).join('')+'</table>';
+ $('#rank').innerHTML='<table><tr><th>#</th><th>Jugador</th><th>ELO</th><th>Último</th><th>PJ</th><th>V-D</th><th>%V</th><th>Local</th><th>Visita</th><th>Dif. pts</th></tr>'+
+ act().map((p,i)=>`<tr><td>${i+1}</td><td><i class="dot" style="background:${p.color}"></i>${p.name}</td><td class="big">${p.elo}</td><td class="${p.last>=0?'w':'l'}">${sg(p.last)}</td><td>${p.g}</td><td>${p.w}-${p.l}</td><td>${pc(p.w,p.g)}%</td><td>${vd(p.hw,p.hg)}</td><td>${vd(p.aw,p.ag)}</td><td>${sg(p.pf-p.pa)}</td></tr>`).join('')+'</table>';
  $('#rec').innerHTML='<table>'+M.slice(-12).reverse().map(m=>{const a=P[m.player1_id],b=P[m.player2_id],w=m.score1>m.score2;
   return `<tr><td class="mut">${new Date(m.played_at).toLocaleDateString('es-AR')}</td><td class="${w?'w':''}">${a.name} ${m.score1}</td><td class="${w?'':'w'}">${m.score2} ${b.name}</td></tr>`}).join('')+'</table>'}
 function line(id,sets){CH[id]?.destroy();const g={color:'#24406b'},t={color:'#8fa3c2'};
@@ -102,8 +107,9 @@ function stats(){const r=act();
 function duels(){const r=act(),f=d=>d?new Date(d).toLocaleDateString('es-AR'):'–',rows=[];
  r.forEach((a,i)=>r.slice(i+1).forEach(b=>{const x=a.h2h[b.id],y=b.h2h[a.id];if(!x||!y)return;
   const n=Math.abs(x.s),w=x.s>0?a:b;
-  rows.push(`<tr><td>${a.name} vs ${b.name}</td><td>${x.w}-${x.l}</td><td>${w.name} · ${n} ${n>1?'victorias seguidas':'victoria'}</td><td>${a.name}: ${f(x.lw)}<br>${b.name}: ${f(y.lw)}</td><td>${a.name}: ${x.mx}<br>${b.name}: ${y.mx}</td></tr>`)}));
- $('#duel').innerHTML='<h3 style="margin-top:0">Rachas por duelo</h3><table><tr><th>Duelo</th><th>V-D</th><th>Racha actual</th><th>Última victoria</th><th>Máxima racha</th></tr>'+rows.join('')+'</table>'}
+  const l5=M.filter(m=>(m.player1_id===a.id&&m.player2_id===b.id)||(m.player1_id===b.id&&m.player2_id===a.id)).slice(-5).map(m=>{const as=m.player1_id===a.id?m.score1:m.score2,bs=m.player1_id===a.id?m.score2:m.score1;return as>bs?'W':'L'});
+  rows.push(`<tr><td>${a.name} vs ${b.name}</td><td>${x.w}-${x.l}</td><td>${w.name} · ${n} ${n>1?'victorias seguidas':'victoria'}</td><td>${a.name}: ${f(x.lw)}<br>${b.name}: ${f(y.lw)}</td><td>${a.name}: ${x.mx}<br>${b.name}: ${y.mx}</td><td class="sqs">${a.name} ${sq(l5)}</td></tr>`)}));
+ $('#duel').innerHTML='<h3 style="margin-top:0">Rachas por duelo</h3><table><tr><th>Duelo</th><th>V-D</th><th>Racha actual</th><th>Última victoria</th><th>Máxima racha</th><th>Últimos 5</th></tr>'+rows.join('')+'</table><p class="mut">Últimos 5 duelos vistos desde el primer jugador de cada fila (verde = ganó, rojo = perdió). El más reciente va a la derecha.</p>'}
 function awards(){const r=act();
  const L10=p=>p.form.slice(-10).filter(x=>x==='W').length,D10=p=>p.fd.slice(-10).reduce((a,b)=>a+b,0);
  const loc=p=>p.hg&&p.ag?pc(p.hw,p.hg)-pc(p.aw,p.ag):null;
@@ -129,7 +135,16 @@ function awards(){const r=act();
   if(!rk.length)return `<div class="aw"><div class="em">${e}</div><h4>${t}</h4><small class="mut">Sin datos suficientes</small></div>`;
   const w=rk[0].p;
   return `<div class="aw"><div class="em">${e}</div><h4>${t}</h4><small class="mut">${d}</small><div class="wn"><i class="dot" style="background:${w.color}"></i>${w.name}</div><div>${fm(w)}</div><div class="mut sm">${rk.slice(1).map(x=>`${x.p.name} ${sh?sh(x.p):fm(x.p).split(' ')[0]}`).join(' · ')}</div></div>`}).join('')}
-const TABS=[['rank','Ranking'],['elo','Evolución ELO'],['stats','Estadísticas'],['awd','Premios'],['h2h','Cara a cara'],['prof','Jugador'],['pred','Predictor']];
+const sq=F=>F.map(x=>`<b class="f ${x}"></b>`).join('');
+let FN=10;
+function forma(){
+ const r=act().map(p=>{const n=Math.min(FN,p.form.length),F=p.form.slice(-n),D=p.fd.slice(-n),w=F.filter(x=>x==='W').length,c=p.curve;
+  return{p,n,F,w,dd:D.reduce((a,b)=>a+b,0),de:c.length>n?p.elo-c[c.length-n-1].y:null}}).sort((a,b)=>b.w/b.n-a.w/a.n||b.dd-a.dd);
+ $('#fseg').innerHTML=[5,10,20].map(k=>`<button data-n="${k}" class="${k===FN?'on':''}">Últimos ${k}</button>`).join('');
+ $('#form').innerHTML='<table><tr><th>#</th><th>Jugador</th><th>Racha actual</th><th>V-D</th><th>%V</th><th>Dif. por partido</th><th>Δ ELO</th><th>Resultados</th></tr>'+
+ r.map((x,i)=>`<tr><td>${i+1}</td>${nm(x.p)}<td class="${x.p.str>0?'w':'l'}">${x.p.str>0?'V'+x.p.str:'D'+-x.p.str}</td><td>${x.w}-${x.n-x.w}</td><td>${pc(x.w,x.n)}%</td><td class="${x.dd>=0?'w':'l'}">${sg((x.dd/x.n).toFixed(1))}</td>${x.de===null?'<td>–</td>':`<td class="${x.de>=0?'w':'l'}">${sg(x.de)}</td>`}<td class="sqs">${sq(x.F)}</td></tr>`).join('')+'</table><p class="mut">La racha actual no depende del filtro. Resultados: el más reciente va a la derecha.</p>'}
+$('#fseg').onclick=e=>{if(e.target.dataset.n){FN=+e.target.dataset.n;forma()}};
+const TABS=[['rank','Ranking'],['form','Forma'],['elo','Evolución ELO'],['stats','Estadísticas'],['awd','Premios'],['h2h','Cara a cara'],['prof','Jugador'],['pred','Predictor']];
 $('#nav').innerHTML=TABS.map(([k,v])=>`<button data-k="${k}">${v}</button>`).join('');
 function tab(k){document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.k===k));document.querySelectorAll('section').forEach(s=>s.classList.toggle('on',s.id==='s-'+k));
  if(k==='elo')line('c-elo',act().map(ds));if(k==='prof')prof($('#sel-p').value)}
@@ -139,6 +154,6 @@ $('#sel-p').onchange=e=>prof(e.target.value);$('#pa').onchange=$('#pb').onchange
  const[pl,m,h]=await Promise.all([all('players'),all('matches'),all('elo_history')]);M=m;build(pl,h);ids=act();
  const o=ids.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');$('#sel-p').innerHTML=$('#pa').innerHTML=$('#pb').innerHTML=o;if(ids[1])$('#pb').value=ids[1].id;
  $('#meta').textContent=`${M.length} partidos · ${ids.length} jugadores · actualizado ${new Date(M[M.length-1].played_at).toLocaleDateString('es-AR')}`;
- rank();stats();awards();h2h();duels();pred();tab('rank')
+ rank();forma();stats();awards();h2h();duels();pred();tab('rank')
 }catch(e){$('#meta').textContent='';$('#err').textContent='No se pudieron cargar los datos: '+(e.message||e)+'. Revisá la URL, la anon key y las políticas RLS de lectura.'}})();
 </script></body></html>
